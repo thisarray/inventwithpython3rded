@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animation</title>
+  <script src="../jsgame0.js"></script>
+  <style type="text/css" media="screen">
+body {
+  background-color: white;
+  color: black;
+}
+.hidden {
+  display: none;
+}
+#original {
+  margin-left: 1em;
+}
+  </style>
+</head>
+
+<body>
+
+<main>
+<h1>Animation</h1>
+
+<canvas id="screen">
+The game screen appears here if your browser supports the Canvas API.
+</canvas>
+<section id="controls">
+  <button type="button" id="reset">Reset</button>
+  <button type="button" id="pause">Pause</button>
+</section>
+
+<h2>Attribution</h2>
+
+<p>From chapter 17.</p>
+
+<p>Licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/us/legalcode">Creative Commons BY-NC-SA</a>.</p>
+
+<h2>Original Python code</h2>
+
+<pre id="original"><code>
+import pygame, sys, time
+from pygame.locals import *
+
+# set up pygame
+pygame.init()
+
+# set up the window
+WINDOWWIDTH = 400
+WINDOWHEIGHT = 400
+windowSurface = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), 0, 32)
+pygame.display.set_caption(&#x27;Animation&#x27;)
+
+# set up direction variables
+DOWNLEFT = 1
+DOWNRIGHT = 3
+UPLEFT = 7
+UPRIGHT = 9
+
+MOVESPEED = 4
+
+# set up the colors
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+
+# set up the block data structure
+b1 = {&#x27;rect&#x27;:pygame.Rect(300, 80, 50, 100), &#x27;color&#x27;:RED, &#x27;dir&#x27;:UPRIGHT}
+b2 = {&#x27;rect&#x27;:pygame.Rect(200, 200, 20, 20), &#x27;color&#x27;:GREEN, &#x27;dir&#x27;:UPLEFT}
+b3 = {&#x27;rect&#x27;:pygame.Rect(100, 150, 60, 60), &#x27;color&#x27;:BLUE, &#x27;dir&#x27;:DOWNLEFT}
+blocks = [b1, b2, b3]
+
+# run the game loop
+while True:
+    # check for the QUIT event
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+
+    # draw the black background onto the surface
+    windowSurface.fill(BLACK)
+
+    for b in blocks:
+        # move the block data structure
+        if b[&#x27;dir&#x27;] == DOWNLEFT:
+            b[&#x27;rect&#x27;].left -= MOVESPEED
+            b[&#x27;rect&#x27;].top += MOVESPEED
+        if b[&#x27;dir&#x27;] == DOWNRIGHT:
+            b[&#x27;rect&#x27;].left += MOVESPEED
+            b[&#x27;rect&#x27;].top += MOVESPEED
+        if b[&#x27;dir&#x27;] == UPLEFT:
+            b[&#x27;rect&#x27;].left -= MOVESPEED
+            b[&#x27;rect&#x27;].top -= MOVESPEED
+        if b[&#x27;dir&#x27;] == UPRIGHT:
+            b[&#x27;rect&#x27;].left += MOVESPEED
+            b[&#x27;rect&#x27;].top -= MOVESPEED
+
+        # check if the block has move out of the window
+        if b[&#x27;rect&#x27;].top &lt; 0:
+            # block has moved past the top
+            if b[&#x27;dir&#x27;] == UPLEFT:
+                b[&#x27;dir&#x27;] = DOWNLEFT
+            if b[&#x27;dir&#x27;] == UPRIGHT:
+                b[&#x27;dir&#x27;] = DOWNRIGHT
+        if b[&#x27;rect&#x27;].bottom &gt; WINDOWHEIGHT:
+            # block has moved past the bottom
+            if b[&#x27;dir&#x27;] == DOWNLEFT:
+                b[&#x27;dir&#x27;] = UPLEFT
+            if b[&#x27;dir&#x27;] == DOWNRIGHT:
+                b[&#x27;dir&#x27;] = UPRIGHT
+        if b[&#x27;rect&#x27;].left &lt; 0:
+            # block has moved past the left side
+            if b[&#x27;dir&#x27;] == DOWNLEFT:
+                b[&#x27;dir&#x27;] = DOWNRIGHT
+            if b[&#x27;dir&#x27;] == UPLEFT:
+                b[&#x27;dir&#x27;] = UPRIGHT
+        if b[&#x27;rect&#x27;].right &gt; WINDOWWIDTH:
+            # block has moved past the right side
+            if b[&#x27;dir&#x27;] == DOWNRIGHT:
+                b[&#x27;dir&#x27;] = DOWNLEFT
+            if b[&#x27;dir&#x27;] == UPRIGHT:
+                b[&#x27;dir&#x27;] = UPLEFT
+
+        # draw the block onto the surface
+        pygame.draw.rect(windowSurface, b[&#x27;color&#x27;], b[&#x27;rect&#x27;])
+
+    # draw the window onto the screen
+    pygame.display.update()
+    time.sleep(0.02)
+</code></pre>
+</main>
+
+<script>
+// set up the window
+WIDTH = 400;
+HEIGHT = 400;
+TITLE = 'Animation';
+
+// set up direction variables
+const Direction = Object.freeze({
+  DOWNLEFT: 1,
+  DOWNRIGHT: 3,
+  UPLEFT: 7,
+  UPRIGHT: 9
+});
+
+const MOVESPEED = 4;
+
+// set up the block data structure
+var blocks;
+
+function reset() {
+  let b1 = new Rect(300, 80, 50, 100),
+      b2 = new Rect(200, 200, 20, 20),
+      b3 = new Rect(100, 150, 60, 60);
+  b1.color = 'red';
+  b1.dir = Direction.UPRIGHT;
+  b2.color = 'green';
+  b2.dir = Direction.UPLEFT;
+  b3.color = 'blue';
+  b3.dir = Direction.DOWNLEFT;
+
+  blocks = [b1, b2, b3];
+}
+
+function draw() {
+  // draw the black background onto the surface
+  screen.fill('black');
+
+  for (let b of blocks) {
+    // draw the block onto the surface
+    screen.draw.filled_rect(b, b.color);
+  }
+}
+
+function update() {
+  for (let b of blocks) {
+    // move the block data structure
+    if (b.dir === Direction.DOWNLEFT) {
+      b.left -= MOVESPEED;
+      b.top += MOVESPEED;
+    }
+    if (b.dir === Direction.DOWNRIGHT) {
+      b.left += MOVESPEED;
+      b.top += MOVESPEED;
+    }
+    if (b.dir === Direction.UPLEFT) {
+      b.left -= MOVESPEED;
+      b.top -= MOVESPEED;
+    }
+    if (b.dir === Direction.UPRIGHT) {
+      b.left += MOVESPEED;
+      b.top -= MOVESPEED;
+    }
+
+    // check if the block has move out of the window
+    if (b.top < 0) {
+      // block has moved past the top
+      if (b.dir === Direction.UPLEFT) {
+        b.dir = Direction.DOWNLEFT;
+      }
+      if (b.dir === Direction.UPRIGHT) {
+        b.dir = Direction.DOWNRIGHT;
+      }
+    }
+    if (b.bottom > HEIGHT) {
+      // block has moved past the bottom
+      if (b.dir === Direction.DOWNLEFT) {
+        b.dir = Direction.UPLEFT;
+      }
+      if (b.dir === Direction.DOWNRIGHT) {
+        b.dir = Direction.UPRIGHT;
+      }
+    }
+    if (b.left < 0) {
+      // block has moved past the left side
+      if (b.dir === Direction.DOWNLEFT) {
+        b.dir = Direction.DOWNRIGHT;
+      }
+      if (b.dir === Direction.UPLEFT) {
+        b.dir = Direction.UPRIGHT;
+      }
+    }
+    if (b.right > WIDTH) {
+      // block has moved past the right side
+      if (b.dir === Direction.DOWNRIGHT) {
+        b.dir = Direction.DOWNLEFT;
+      }
+      if (b.dir === Direction.UPRIGHT) {
+        b.dir = Direction.UPLEFT;
+      }
+    }
+  }
+}
+
+window.addEventListener('load', (event) => {
+  reset();
+  screen.set_mode('#screen', '#reset', '#pause');
+});
+</script>
+</body>
+
+</html>
