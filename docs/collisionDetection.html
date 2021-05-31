@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collision Detection</title>
+  <script src="../jsgame0.js"></script>
+  <style type="text/css" media="screen">
+body {
+  background-color: white;
+  color: black;
+}
+.hidden {
+  display: none;
+}
+#original {
+  margin-left: 1em;
+}
+  </style>
+</head>
+
+<body>
+
+<main>
+<h1>Collision Detection</h1>
+
+<canvas id="screen">
+The game screen appears here if your browser supports the Canvas API.
+</canvas>
+<section id="controls">
+  <button type="button" id="reset">Reset</button>
+  <button type="button" id="pause">Pause</button>
+</section>
+
+<h2>Attribution</h2>
+
+<p>From chapter 18.</p>
+
+<p>Licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/us/legalcode">Creative Commons BY-NC-SA</a>.</p>
+
+<h2>Original Python code</h2>
+
+<pre id="original"><code>
+import pygame, sys, random
+from pygame.locals import *
+
+def doRectsOverlap(rect1, rect2):
+    for a, b in [(rect1, rect2), (rect2, rect1)]:
+        # Check if a&#x27;s corners are inside b
+        if ((isPointInsideRect(a.left, a.top, b)) or
+            (isPointInsideRect(a.left, a.bottom, b)) or
+            (isPointInsideRect(a.right, a.top, b)) or
+            (isPointInsideRect(a.right, a.bottom, b))):
+            return True
+
+    return False
+
+def isPointInsideRect(x, y, rect):
+    if (x &gt; rect.left) and (x &lt; rect.right) and (y &gt; rect.top) and (y &lt; rect.bottom):
+        return True
+    else:
+        return False
+
+
+# set up pygame
+pygame.init()
+mainClock = pygame.time.Clock()
+
+# set up the window
+WINDOWWIDTH = 400
+WINDOWHEIGHT = 400
+windowSurface = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), 0, 32)
+pygame.display.set_caption(&#x27;Collision Detection&#x27;)
+
+# set up direction variables
+DOWNLEFT = 1
+DOWNRIGHT = 3
+UPLEFT = 7
+UPRIGHT = 9
+
+MOVESPEED = 4
+
+# set up the colors
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
+WHITE = (255, 255, 255)
+
+# set up the bouncer and food data structures
+foodCounter = 0
+NEWFOOD = 40
+FOODSIZE = 20
+bouncer = {&#x27;rect&#x27;:pygame.Rect(300, 100, 50, 50), &#x27;dir&#x27;:UPLEFT}
+foods = []
+for i in range(20):
+    foods.append(pygame.Rect(random.randint(0, WINDOWWIDTH - FOODSIZE), random.randint(0, WINDOWHEIGHT - FOODSIZE), FOODSIZE, FOODSIZE))
+
+# run the game loop
+while True:
+    # check for the QUIT event
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+
+    foodCounter += 1
+    if foodCounter &gt;= NEWFOOD:
+        # add new food
+        foodCounter = 0
+        foods.append(pygame.Rect(random.randint(0, WINDOWWIDTH - FOODSIZE), random.randint(0, WINDOWHEIGHT - FOODSIZE), FOODSIZE, FOODSIZE))
+
+    # draw the black background onto the surface
+    windowSurface.fill(BLACK)
+
+    # move the bouncer data structure
+    if bouncer[&#x27;dir&#x27;] == DOWNLEFT:
+        bouncer[&#x27;rect&#x27;].left -= MOVESPEED
+        bouncer[&#x27;rect&#x27;].top += MOVESPEED
+    if bouncer[&#x27;dir&#x27;] == DOWNRIGHT:
+        bouncer[&#x27;rect&#x27;].left += MOVESPEED
+        bouncer[&#x27;rect&#x27;].top += MOVESPEED
+    if bouncer[&#x27;dir&#x27;] == UPLEFT:
+        bouncer[&#x27;rect&#x27;].left -= MOVESPEED
+        bouncer[&#x27;rect&#x27;].top -= MOVESPEED
+    if bouncer[&#x27;dir&#x27;] == UPRIGHT:
+        bouncer[&#x27;rect&#x27;].left += MOVESPEED
+        bouncer[&#x27;rect&#x27;].top -= MOVESPEED
+
+    # check if the bouncer has move out of the window
+    if bouncer[&#x27;rect&#x27;].top &lt; 0:
+        # bouncer has moved past the top
+        if bouncer[&#x27;dir&#x27;] == UPLEFT:
+            bouncer[&#x27;dir&#x27;] = DOWNLEFT
+        if bouncer[&#x27;dir&#x27;] == UPRIGHT:
+            bouncer[&#x27;dir&#x27;] = DOWNRIGHT
+    if bouncer[&#x27;rect&#x27;].bottom &gt; WINDOWHEIGHT:
+        # bouncer has moved past the bottom
+        if bouncer[&#x27;dir&#x27;] == DOWNLEFT:
+            bouncer[&#x27;dir&#x27;] = UPLEFT
+        if bouncer[&#x27;dir&#x27;] == DOWNRIGHT:
+            bouncer[&#x27;dir&#x27;] = UPRIGHT
+    if bouncer[&#x27;rect&#x27;].left &lt; 0:
+        # bouncer has moved past the left side
+        if bouncer[&#x27;dir&#x27;] == DOWNLEFT:
+            bouncer[&#x27;dir&#x27;] = DOWNRIGHT
+        if bouncer[&#x27;dir&#x27;] == UPLEFT:
+            bouncer[&#x27;dir&#x27;] = UPRIGHT
+    if bouncer[&#x27;rect&#x27;].right &gt; WINDOWWIDTH:
+        # bouncer has moved past the right side
+        if bouncer[&#x27;dir&#x27;] == DOWNRIGHT:
+            bouncer[&#x27;dir&#x27;] = DOWNLEFT
+        if bouncer[&#x27;dir&#x27;] == UPRIGHT:
+            bouncer[&#x27;dir&#x27;] = UPLEFT
+
+    # draw the bouncer onto the surface
+    pygame.draw.rect(windowSurface, WHITE, bouncer[&#x27;rect&#x27;])
+
+    # check if the bouncer has intersected with any food squares.
+    for food in foods[:]:
+        if doRectsOverlap(bouncer[&#x27;rect&#x27;], food):
+            foods.remove(food)
+
+    # draw the food
+    for i in range(len(foods)):
+        pygame.draw.rect(windowSurface, GREEN, foods[i])
+
+    # draw the window onto the screen
+    pygame.display.update()
+    mainClock.tick(40)
+</code></pre>
+</main>
+
+<script>
+// set up the window
+WIDTH = 400;
+HEIGHT = 400;
+TITLE = 'Collision Detection';
+
+// set up direction variables
+const Direction = Object.freeze({
+  DOWNLEFT: 1,
+  DOWNRIGHT: 3,
+  UPLEFT: 7,
+  UPRIGHT: 9
+});
+
+const MOVESPEED = 4;
+
+const NEWFOOD = 40;
+const FOODSIZE = 20;
+
+/*
+ * Return a random integer N such that min <= N < max.
+ */
+function getRandomInteger(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor((Math.random() * (max - min)) + min);
+}
+
+// set up the bouncer and food data structures
+var foodCounter, bouncer, foods;
+
+function reset() {
+  foodCounter = 0;
+  bouncer = new Rect(300, 100, 50, 50);
+  bouncer.dir = Direction.UPLEFT;
+  foods = [];
+  for (let i = 0; i < 20; i++) {
+    foods.push(new Rect(getRandomInteger(0, WIDTH - FOODSIZE + 1), getRandomInteger(0, HEIGHT - FOODSIZE + 1), FOODSIZE, FOODSIZE));
+  }
+}
+
+function draw() {
+  // draw the black background onto the surface
+  screen.fill('black');
+
+  // draw the bouncer onto the surface
+  screen.draw.filled_rect(bouncer, 'white');
+
+  // draw the food
+  for (let f of foods) {
+    screen.draw.filled_rect(f, 'green');
+  }
+}
+
+function update() {
+  foodCounter += 1;
+  if (foodCounter >= NEWFOOD) {
+    // add new food
+    foodCounter = 0;
+    foods.push(new Rect(getRandomInteger(0, WIDTH - FOODSIZE + 1), getRandomInteger(0, HEIGHT - FOODSIZE + 1), FOODSIZE, FOODSIZE));
+  }
+
+  // move the bouncer data structure
+  if (bouncer.dir === Direction.DOWNLEFT) {
+    bouncer.left -= MOVESPEED;
+    bouncer.top += MOVESPEED;
+  }
+  if (bouncer.dir === Direction.DOWNRIGHT) {
+    bouncer.left += MOVESPEED;
+    bouncer.top += MOVESPEED;
+  }
+  if (bouncer.dir === Direction.UPLEFT) {
+    bouncer.left -= MOVESPEED;
+    bouncer.top -= MOVESPEED;
+  }
+  if (bouncer.dir === Direction.UPRIGHT) {
+    bouncer.left += MOVESPEED;
+    bouncer.top -= MOVESPEED;
+  }
+
+  // check if the bouncer has move out of the window
+  if (bouncer.top < 0) {
+    // bouncer has moved past the top
+    if (bouncer.dir === Direction.UPLEFT) {
+      bouncer.dir = Direction.DOWNLEFT;
+    }
+    if (bouncer.dir === Direction.UPRIGHT) {
+      bouncer.dir = Direction.DOWNRIGHT;
+    }
+  }
+  if (bouncer.bottom > HEIGHT) {
+    // bouncer has moved past the bottom
+    if (bouncer.dir === Direction.DOWNLEFT) {
+      bouncer.dir = Direction.UPLEFT;
+    }
+    if (bouncer.dir === Direction.DOWNRIGHT) {
+      bouncer.dir = Direction.UPRIGHT;
+    }
+  }
+  if (bouncer.left < 0) {
+    // bouncer has moved past the left side
+    if (bouncer.dir === Direction.DOWNLEFT) {
+      bouncer.dir = Direction.DOWNRIGHT;
+    }
+    if (bouncer.dir === Direction.UPLEFT) {
+      bouncer.dir = Direction.UPRIGHT;
+    }
+  }
+  if (bouncer.right > WIDTH) {
+    // bouncer has moved past the right side
+    if (bouncer.dir === Direction.DOWNRIGHT) {
+      bouncer.dir = Direction.DOWNLEFT;
+    }
+    if (bouncer.dir === Direction.UPRIGHT) {
+      bouncer.dir = Direction.UPLEFT;
+    }
+  }
+
+  // check if the bouncer has intersected with any food squares.
+  foods = foods.filter(f => !bouncer.colliderect(f));
+}
+
+window.addEventListener('load', (event) => {
+  reset();
+  screen.set_mode('#screen', '#reset', '#pause');
+});
+</script>
+</body>
+
+</html>
