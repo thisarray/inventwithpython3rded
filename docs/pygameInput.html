@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Input</title>
+  <script src="../jsgame0.js"></script>
+  <style type="text/css" media="screen">
+body {
+  background-color: white;
+  color: black;
+}
+.hidden {
+  display: none;
+}
+#original {
+  margin-left: 1em;
+}
+  </style>
+</head>
+
+<body>
+
+<main>
+<h1>Input</h1>
+
+<canvas id="screen">
+The game screen appears here if your browser supports the Canvas API.
+</canvas>
+<section id="controls">
+  <button type="button" id="reset">Reset</button>
+  <button type="button" id="pause">Pause</button>
+</section>
+
+<h2>Attribution</h2>
+
+<p>From chapter 18.</p>
+
+<p>Licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/us/legalcode">Creative Commons BY-NC-SA</a>.</p>
+
+<h2>Original Python code</h2>
+
+<pre id="original"><code>
+import pygame, sys, random
+from pygame.locals import *
+
+# set up pygame
+pygame.init()
+mainClock = pygame.time.Clock()
+
+# set up the window
+WINDOWWIDTH = 400
+WINDOWHEIGHT = 400
+windowSurface = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), 0, 32)
+pygame.display.set_caption(&#x27;Input&#x27;)
+
+# set up the colors
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
+WHITE = (255, 255, 255)
+
+# set up the player and food data structure
+foodCounter = 0
+NEWFOOD = 40
+FOODSIZE = 20
+player = pygame.Rect(300, 100, 50, 50)
+foods = []
+for i in range(20):
+    foods.append(pygame.Rect(random.randint(0, WINDOWWIDTH - FOODSIZE), random.randint(0, WINDOWHEIGHT - FOODSIZE), FOODSIZE, FOODSIZE))
+
+# set up movement variables
+moveLeft = False
+moveRight = False
+moveUp = False
+moveDown = False
+
+MOVESPEED = 6
+
+
+# run the game loop
+while True:
+    # check for events
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == KEYDOWN:
+            # change the keyboard variables
+            if event.key == K_LEFT or event.key == ord(&#x27;a&#x27;):
+                moveRight = False
+                moveLeft = True
+            if event.key == K_RIGHT or event.key == ord(&#x27;d&#x27;):
+                moveLeft = False
+                moveRight = True
+            if event.key == K_UP or event.key == ord(&#x27;w&#x27;):
+                moveDown = False
+                moveUp = True
+            if event.key == K_DOWN or event.key == ord(&#x27;s&#x27;):
+                moveUp = False
+                moveDown = True
+        if event.type == KEYUP:
+            if event.key == K_ESCAPE:
+                pygame.quit()
+                sys.exit()
+            if event.key == K_LEFT or event.key == ord(&#x27;a&#x27;):
+                moveLeft = False
+            if event.key == K_RIGHT or event.key == ord(&#x27;d&#x27;):
+                moveRight = False
+            if event.key == K_UP or event.key == ord(&#x27;w&#x27;):
+                moveUp = False
+            if event.key == K_DOWN or event.key == ord(&#x27;s&#x27;):
+                moveDown = False
+            if event.key == ord(&#x27;x&#x27;):
+                player.top = random.randint(0, WINDOWHEIGHT - player.height)
+                player.left = random.randint(0, WINDOWWIDTH - player.width)
+
+        if event.type == MOUSEBUTTONUP:
+            foods.append(pygame.Rect(event.pos[0], event.pos[1], FOODSIZE, FOODSIZE))
+
+    foodCounter += 1
+    if foodCounter &gt;= NEWFOOD:
+        # add new food
+        foodCounter = 0
+        foods.append(pygame.Rect(random.randint(0, WINDOWWIDTH - FOODSIZE), random.randint(0, WINDOWHEIGHT - FOODSIZE), FOODSIZE, FOODSIZE))
+
+    # draw the black background onto the surface
+    windowSurface.fill(BLACK)
+
+    # move the player
+    if moveDown and player.bottom &lt; WINDOWHEIGHT:
+        player.top += MOVESPEED
+    if moveUp and player.top &gt; 0:
+        player.top -= MOVESPEED
+    if moveLeft and player.left &gt; 0:
+        player.left -= MOVESPEED
+    if moveRight and player.right &lt; WINDOWWIDTH:
+        player.right += MOVESPEED
+
+    # draw the player onto the surface
+    pygame.draw.rect(windowSurface, WHITE, player)
+
+    # check if the player has intersected with any food squares.
+    for food in foods[:]:
+        if player.colliderect(food):
+            foods.remove(food)
+
+    # draw the food
+    for i in range(len(foods)):
+        pygame.draw.rect(windowSurface, GREEN, foods[i])
+
+    # draw the window onto the screen
+    pygame.display.update()
+    mainClock.tick(40)
+</code></pre>
+</main>
+
+<script>
+// set up the window
+WIDTH = 400;
+HEIGHT = 400;
+TITLE = 'Input';
+
+const MOVESPEED = 6;
+
+const NEWFOOD = 40;
+const FOODSIZE = 20;
+
+/*
+ * Return a random integer N such that min <= N < max.
+ */
+function getRandomInteger(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor((Math.random() * (max - min)) + min);
+}
+
+// set up the player and food data structure
+var foodCounter, player, foods;
+
+function reset() {
+  foodCounter = 0;
+  player = new Rect(300, 100, 50, 50);
+  foods = [];
+  for (let i = 0; i < 20; i++) {
+    foods.push(new Rect(getRandomInteger(0, WIDTH - FOODSIZE + 1), getRandomInteger(0, HEIGHT - FOODSIZE + 1), FOODSIZE, FOODSIZE));
+  }
+}
+
+function draw() {
+  // draw the black background onto the surface
+  screen.fill('black');
+
+  // draw the player onto the surface
+  screen.draw.filled_rect(player, 'white');
+
+  // draw the food
+  for (let f of foods) {
+    screen.draw.filled_rect(f, 'green');
+  }
+}
+
+function update() {
+  foodCounter += 1;
+  if (foodCounter >= NEWFOOD) {
+    // add new food
+    foodCounter = 0;
+    foods.push(new Rect(getRandomInteger(0, WIDTH - FOODSIZE + 1), getRandomInteger(0, HEIGHT - FOODSIZE + 1), FOODSIZE, FOODSIZE));
+  }
+
+  // move the player
+  if ((keyboard[keys.DOWN] || keyboard[keys.S]) && (player.bottom < HEIGHT)) {
+    player.top += MOVESPEED;
+  }
+  if ((keyboard[keys.UP] || keyboard[keys.W]) && (player.top > 0)) {
+    player.top -= MOVESPEED;
+  }
+  if ((keyboard[keys.LEFT] || keyboard[keys.A]) && (player.left > 0)) {
+    player.left -= MOVESPEED;
+  }
+  if ((keyboard[keys.RIGHT] || keyboard[keys.D]) && (player.right < WIDTH)) {
+    player.right += MOVESPEED;
+  }
+
+  if (keyboard[keys.X]) {
+    player.top = getRandomInteger(0, HEIGHT - player.height + 1);
+    player.left = getRandomInteger(0, WIDTH - player.width + 1);
+  }
+
+  // check if the player has intersected with any food squares.
+  foods = foods.filter(f => !player.colliderect(f));
+}
+
+function on_mouse_down(pos) {
+  foods.push(new Rect(pos[0], pos[1], FOODSIZE, FOODSIZE));
+}
+
+window.addEventListener('load', (event) => {
+  reset();
+  screen.set_mode('#screen', '#reset', '#pause');
+});
+</script>
+</body>
+
+</html>
