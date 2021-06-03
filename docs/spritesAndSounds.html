@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sprites and Sound</title>
+  <script src="../jsgame0.js"></script>
+  <style type="text/css" media="screen">
+body {
+  background-color: white;
+  color: black;
+}
+.hidden {
+  display: none;
+}
+#original {
+  margin-left: 1em;
+}
+  </style>
+</head>
+
+<body>
+<section id="imageLoader" class="hidden">
+  <img class="hidden" src="images/cherry.png" alt="cherry" data-name="cherry">
+  <img class="hidden" src="images/player.png" alt="player" data-name="player">
+</section>
+<section id="soundLoader" class="hidden">
+  <audio class="hidden" controls preload="auto" src="sounds/pickup.wav" data-name="pickup">Your browser does not support the audio element.</audio>
+</section>
+
+<main>
+<h1>Sprites and Sound</h1>
+
+<canvas id="screen">
+The game screen appears here if your browser supports the Canvas API.
+</canvas>
+<section id="controls">
+  <button type="button" id="reset">Reset</button>
+  <button type="button" id="pause">Pause</button>
+</section>
+
+<p>jsgame0 cannot play midi.</p>
+
+<h2>Attribution</h2>
+
+<p>From chapter 19.</p>
+
+<p>Licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/us/legalcode">Creative Commons BY-NC-SA</a>.</p>
+
+<h2>Original Python code</h2>
+
+<pre id="original"><code>
+import pygame, sys, time, random
+from pygame.locals import *
+
+# set up pygame
+pygame.init()
+mainClock = pygame.time.Clock()
+
+# set up the window
+WINDOWWIDTH = 400
+WINDOWHEIGHT = 400
+windowSurface = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), 0, 32)
+pygame.display.set_caption(&#x27;Sprites and Sound&#x27;)
+
+# set up the colors
+BLACK = (0, 0, 0)
+
+# set up the block data structure
+player = pygame.Rect(300, 100, 40, 40)
+playerImage = pygame.image.load(&#x27;player.png&#x27;)
+playerStretchedImage = pygame.transform.scale(playerImage, (40, 40))
+foodImage = pygame.image.load(&#x27;cherry.png&#x27;)
+foods = []
+for i in range(20):
+    foods.append(pygame.Rect(random.randint(0, WINDOWWIDTH - 20), random.randint(0, WINDOWHEIGHT - 20), 20, 20))
+
+foodCounter = 0
+NEWFOOD = 40
+
+# set up keyboard variables
+moveLeft = False
+moveRight = False
+moveUp = False
+moveDown = False
+
+MOVESPEED = 6
+
+# set up music
+pickUpSound = pygame.mixer.Sound(&#x27;pickup.wav&#x27;)
+pygame.mixer.music.load(&#x27;background.mid&#x27;)
+pygame.mixer.music.play(-1, 0.0)
+musicPlaying = True
+
+# run the game loop
+while True:
+    # check for the QUIT event
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == KEYDOWN:
+            # change the keyboard variables
+            if event.key == K_LEFT or event.key == ord(&#x27;a&#x27;):
+                moveRight = False
+                moveLeft = True
+            if event.key == K_RIGHT or event.key == ord(&#x27;d&#x27;):
+                moveLeft = False
+                moveRight = True
+            if event.key == K_UP or event.key == ord(&#x27;w&#x27;):
+                moveDown = False
+                moveUp = True
+            if event.key == K_DOWN or event.key == ord(&#x27;s&#x27;):
+                moveUp = False
+                moveDown = True
+        if event.type == KEYUP:
+            if event.key == K_ESCAPE:
+                pygame.quit()
+                sys.exit()
+            if event.key == K_LEFT or event.key == ord(&#x27;a&#x27;):
+                moveLeft = False
+            if event.key == K_RIGHT or event.key == ord(&#x27;d&#x27;):
+                moveRight = False
+            if event.key == K_UP or event.key == ord(&#x27;w&#x27;):
+                moveUp = False
+            if event.key == K_DOWN or event.key == ord(&#x27;s&#x27;):
+                moveDown = False
+            if event.key == ord(&#x27;x&#x27;):
+                player.top = random.randint(0, WINDOWHEIGHT - player.height)
+                player.left = random.randint(0, WINDOWWIDTH - player.width)
+            if event.key == ord(&#x27;m&#x27;):
+                if musicPlaying:
+                    pygame.mixer.music.stop()
+                else:
+                    pygame.mixer.music.play(-1, 0.0)
+                musicPlaying = not musicPlaying
+
+        if event.type == MOUSEBUTTONUP:
+            foods.append(pygame.Rect(event.pos[0] - 10, event.pos[1] - 10, 20, 20))
+
+    foodCounter += 1
+    if foodCounter &gt;= NEWFOOD:
+        # add new food
+        foodCounter = 0
+        foods.append(pygame.Rect(random.randint(0, WINDOWWIDTH - 20), random.randint(0, WINDOWHEIGHT - 20), 20, 20))
+
+    # draw the black background onto the surface
+    windowSurface.fill(BLACK)
+
+    # move the player
+    if moveDown and player.bottom &lt; WINDOWHEIGHT:
+        player.top += MOVESPEED
+    if moveUp and player.top &gt; 0:
+        player.top -= MOVESPEED
+    if moveLeft and player.left &gt; 0:
+        player.left -= MOVESPEED
+    if moveRight and player.right &lt; WINDOWWIDTH:
+        player.right += MOVESPEED
+
+
+    # draw the block onto the surface
+    windowSurface.blit(playerStretchedImage, player)
+
+    # check if the block has intersected with any food squares.
+    for food in foods[:]:
+        if player.colliderect(food):
+            foods.remove(food)
+            player = pygame.Rect(player.left, player.top, player.width + 2, player.height + 2)
+            playerStretchedImage = pygame.transform.scale(playerImage, (player.width, player.height))
+            if musicPlaying:
+                pickUpSound.play()
+
+    # draw the food
+    for food in foods:
+        windowSurface.blit(foodImage, food)
+
+    # draw the window onto the screen
+    pygame.display.update()
+    mainClock.tick(40)
+</code></pre>
+</main>
+
+<script>
+// set up the window
+WIDTH = 400;
+HEIGHT = 400;
+TITLE = 'Sprites and Sound';
+
+const MOVESPEED = 6;
+
+const NEWFOOD = 40;
+
+/*
+ * Return a random integer N such that min <= N < max.
+ */
+function getRandomInteger(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor((Math.random() * (max - min)) + min);
+}
+
+// set up the block data structure
+var foodCounter, playerImage, player, foods, musicPlaying;
+
+function reset() {
+  foodCounter = 0;
+  playerImage = new Actor('player');
+  playerImage.topleft = [300, 100];
+  player = new Rect(playerImage);
+  foods = [];
+  for (let i = 0; i < 20; i++) {
+    let food = new Actor('cherry');
+    food.topleft = [getRandomInteger(0, WIDTH - food.width + 1), getRandomInteger(0, HEIGHT - food.height + 1)];
+    foods.push(food);
+  }
+
+  musicPlaying = true;
+}
+
+function draw() {
+  // draw the black background onto the surface
+  screen.fill('black');
+
+  // draw the block onto the surface
+  screen.draw.rect(player, 'white');
+  playerImage.pos = player.center;
+  playerImage.draw();
+
+  // draw the food
+  for (let f of foods) {
+    f.draw();
+  }
+}
+
+function update() {
+  foodCounter += 1;
+  if (foodCounter >= NEWFOOD) {
+    // add new food
+    foodCounter = 0;
+    let food = new Actor('cherry');
+    food.topleft = [getRandomInteger(0, WIDTH - food.width + 1), getRandomInteger(0, HEIGHT - food.height + 1)];
+    foods.push(food);
+  }
+
+  // move the player
+  if ((keyboard[keys.DOWN] || keyboard[keys.S]) && (player.bottom < HEIGHT)) {
+    player.top += MOVESPEED;
+  }
+  if ((keyboard[keys.UP] || keyboard[keys.W]) && (player.top > 0)) {
+    player.top -= MOVESPEED;
+  }
+  if ((keyboard[keys.LEFT] || keyboard[keys.A]) && (player.left > 0)) {
+    player.left -= MOVESPEED;
+  }
+  if ((keyboard[keys.RIGHT] || keyboard[keys.D]) && (player.right < WIDTH)) {
+    player.right += MOVESPEED;
+  }
+
+  if (keyboard[keys.X]) {
+    player.top = getRandomInteger(0, HEIGHT - player.height + 1);
+    player.left = getRandomInteger(0, WIDTH - player.width + 1);
+  }
+  if (keyboard[keys.M]) {
+    musicPlaying = !musicPlaying;
+  }
+
+  // check if the block has intersected with any food squares.
+  let delta = foods.length;
+  foods = foods.filter(f => !player.colliderect(f));
+  delta -= foods.length;
+  if (delta > 0) {
+    player = new Rect(player.left, player.top, player.width + (delta * 2), player.height + (delta * 2));
+    if (musicPlaying) {
+      sounds.pickup.play();
+    }
+  }
+}
+
+function on_mouse_down(pos) {
+  let food = new Actor('cherry');
+  food.topleft = [pos[0] - 10, pos[1] - 10];
+  foods.push(food);
+}
+
+window.addEventListener('load', (event) => {
+  images.LOAD('#imageLoader img');
+  sounds.LOAD('#soundLoader audio');
+  reset();
+  screen.set_mode('#screen', '#reset', '#pause');
+});
+</script>
+</body>
+
+</html>
