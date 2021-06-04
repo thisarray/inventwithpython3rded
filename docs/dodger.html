@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dodger</title>
+  <script src="../jsgame0.js"></script>
+  <style type="text/css" media="screen">
+body {
+  background-color: white;
+  color: black;
+}
+.hidden {
+  display: none;
+}
+#original {
+  margin-left: 1em;
+}
+  </style>
+</head>
+
+<body>
+<section id="imageLoader" class="hidden">
+  <img class="hidden" src="images/baddie.png" alt="baddie" data-name="baddie">
+  <img class="hidden" src="images/player.png" alt="player" data-name="player">
+</section>
+<section id="soundLoader" class="hidden">
+  <audio class="hidden" controls preload="auto" src="sounds/gameover.wav" data-name="gameover">Your browser does not support the audio element.</audio>
+</section>
+
+<main>
+<h1>Dodger</h1>
+
+<canvas id="screen">
+The game screen appears here if your browser supports the Canvas API.
+</canvas>
+<section id="controls">
+  <button type="button" id="reset">Reset</button>
+  <button type="button" id="pause">Pause</button>
+</section>
+
+<p>jsgame0 cannot play midi.</p>
+
+<h2>Attribution</h2>
+
+<p>From chapter 20.</p>
+
+<p>Licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/us/legalcode">Creative Commons BY-NC-SA</a>.</p>
+
+<h2>Original Python code</h2>
+
+<pre id="original"><code>
+import pygame, random, sys
+from pygame.locals import *
+
+WINDOWWIDTH = 600
+WINDOWHEIGHT = 600
+TEXTCOLOR = (255, 255, 255)
+BACKGROUNDCOLOR = (0, 0, 0)
+FPS = 40
+BADDIEMINSIZE = 10
+BADDIEMAXSIZE = 40
+BADDIEMINSPEED = 1
+BADDIEMAXSPEED = 8
+ADDNEWBADDIERATE = 6
+PLAYERMOVERATE = 5
+
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+def waitForPlayerToPressKey():
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                terminate()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE: # pressing escape quits
+                    terminate()
+                return
+
+def playerHasHitBaddie(playerRect, baddies):
+    for b in baddies:
+        if playerRect.colliderect(b[&#x27;rect&#x27;]):
+            return True
+    return False
+
+def drawText(text, font, surface, x, y):
+    textobj = font.render(text, 1, TEXTCOLOR)
+    textrect = textobj.get_rect()
+    textrect.topleft = (x, y)
+    surface.blit(textobj, textrect)
+
+# set up pygame, the window, and the mouse cursor
+pygame.init()
+mainClock = pygame.time.Clock()
+windowSurface = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
+pygame.display.set_caption(&#x27;Dodger&#x27;)
+pygame.mouse.set_visible(False)
+
+# set up fonts
+font = pygame.font.SysFont(None, 48)
+
+# set up sounds
+gameOverSound = pygame.mixer.Sound(&#x27;gameover.wav&#x27;)
+pygame.mixer.music.load(&#x27;background.mid&#x27;)
+
+# set up images
+playerImage = pygame.image.load(&#x27;player.png&#x27;)
+playerRect = playerImage.get_rect()
+baddieImage = pygame.image.load(&#x27;baddie.png&#x27;)
+
+# show the &quot;Start&quot; screen
+drawText(&#x27;Dodger&#x27;, font, windowSurface, (WINDOWWIDTH / 3), (WINDOWHEIGHT / 3))
+drawText(&#x27;Press a key to start.&#x27;, font, windowSurface, (WINDOWWIDTH / 3) - 30, (WINDOWHEIGHT / 3) + 50)
+pygame.display.update()
+waitForPlayerToPressKey()
+
+
+topScore = 0
+while True:
+    # set up the start of the game
+    baddies = []
+    score = 0
+    playerRect.topleft = (WINDOWWIDTH / 2, WINDOWHEIGHT - 50)
+    moveLeft = moveRight = moveUp = moveDown = False
+    reverseCheat = slowCheat = False
+    baddieAddCounter = 0
+    pygame.mixer.music.play(-1, 0.0)
+
+    while True: # the game loop runs while the game part is playing
+        score += 1 # increase score
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                terminate()
+
+            if event.type == KEYDOWN:
+                if event.key == ord(&#x27;z&#x27;):
+                    reverseCheat = True
+                if event.key == ord(&#x27;x&#x27;):
+                    slowCheat = True
+                if event.key == K_LEFT or event.key == ord(&#x27;a&#x27;):
+                    moveRight = False
+                    moveLeft = True
+                if event.key == K_RIGHT or event.key == ord(&#x27;d&#x27;):
+                    moveLeft = False
+                    moveRight = True
+                if event.key == K_UP or event.key == ord(&#x27;w&#x27;):
+                    moveDown = False
+                    moveUp = True
+                if event.key == K_DOWN or event.key == ord(&#x27;s&#x27;):
+                    moveUp = False
+                    moveDown = True
+
+            if event.type == KEYUP:
+                if event.key == ord(&#x27;z&#x27;):
+                    reverseCheat = False
+                    score = 0
+                if event.key == ord(&#x27;x&#x27;):
+                    slowCheat = False
+                    score = 0
+                if event.key == K_ESCAPE:
+                        terminate()
+
+                if event.key == K_LEFT or event.key == ord(&#x27;a&#x27;):
+                    moveLeft = False
+                if event.key == K_RIGHT or event.key == ord(&#x27;d&#x27;):
+                    moveRight = False
+                if event.key == K_UP or event.key == ord(&#x27;w&#x27;):
+                    moveUp = False
+                if event.key == K_DOWN or event.key == ord(&#x27;s&#x27;):
+                    moveDown = False
+
+            if event.type == MOUSEMOTION:
+                # If the mouse moves, move the player where the cursor is.
+                playerRect.move_ip(event.pos[0] - playerRect.centerx, event.pos[1] - playerRect.centery)
+
+        # Add new baddies at the top of the screen, if needed.
+        if not reverseCheat and not slowCheat:
+            baddieAddCounter += 1
+        if baddieAddCounter == ADDNEWBADDIERATE:
+            baddieAddCounter = 0
+            baddieSize = random.randint(BADDIEMINSIZE, BADDIEMAXSIZE)
+            newBaddie = {&#x27;rect&#x27;: pygame.Rect(random.randint(0, WINDOWWIDTH-baddieSize), 0 - baddieSize, baddieSize, baddieSize),
+                        &#x27;speed&#x27;: random.randint(BADDIEMINSPEED, BADDIEMAXSPEED),
+                        &#x27;surface&#x27;:pygame.transform.scale(baddieImage, (baddieSize, baddieSize)),
+                        }
+
+            baddies.append(newBaddie)
+
+        # Move the player around.
+        if moveLeft and playerRect.left &gt; 0:
+            playerRect.move_ip(-1 * PLAYERMOVERATE, 0)
+        if moveRight and playerRect.right &lt; WINDOWWIDTH:
+            playerRect.move_ip(PLAYERMOVERATE, 0)
+        if moveUp and playerRect.top &gt; 0:
+            playerRect.move_ip(0, -1 * PLAYERMOVERATE)
+        if moveDown and playerRect.bottom &lt; WINDOWHEIGHT:
+            playerRect.move_ip(0, PLAYERMOVERATE)
+
+        # Move the mouse cursor to match the player.
+        pygame.mouse.set_pos(playerRect.centerx, playerRect.centery)
+
+        # Move the baddies down.
+        for b in baddies:
+            if not reverseCheat and not slowCheat:
+                b[&#x27;rect&#x27;].move_ip(0, b[&#x27;speed&#x27;])
+            elif reverseCheat:
+                b[&#x27;rect&#x27;].move_ip(0, -5)
+            elif slowCheat:
+                b[&#x27;rect&#x27;].move_ip(0, 1)
+
+        # Delete baddies that have fallen past the bottom.
+        for b in baddies[:]:
+            if b[&#x27;rect&#x27;].top &gt; WINDOWHEIGHT:
+                baddies.remove(b)
+
+        # Draw the game world on the window.
+        windowSurface.fill(BACKGROUNDCOLOR)
+
+        # Draw the score and top score.
+        drawText(&#x27;Score: %s&#x27; % (score), font, windowSurface, 10, 0)
+        drawText(&#x27;Top Score: %s&#x27; % (topScore), font, windowSurface, 10, 40)
+
+        # Draw the player&#x27;s rectangle
+        windowSurface.blit(playerImage, playerRect)
+
+        # Draw each baddie
+        for b in baddies:
+            windowSurface.blit(b[&#x27;surface&#x27;], b[&#x27;rect&#x27;])
+
+        pygame.display.update()
+
+        # Check if any of the baddies have hit the player.
+        if playerHasHitBaddie(playerRect, baddies):
+            if score &gt; topScore:
+                topScore = score # set new top score
+            break
+
+        mainClock.tick(FPS)
+
+    # Stop the game and show the &quot;Game Over&quot; screen.
+    pygame.mixer.music.stop()
+    gameOverSound.play()
+
+    drawText(&#x27;GAME OVER&#x27;, font, windowSurface, (WINDOWWIDTH / 3), (WINDOWHEIGHT / 3))
+    drawText(&#x27;Press a key to play again.&#x27;, font, windowSurface, (WINDOWWIDTH / 3) - 80, (WINDOWHEIGHT / 3) + 50)
+    pygame.display.update()
+    waitForPlayerToPressKey()
+
+    gameOverSound.stop()
+</code></pre>
+</main>
+
+<script>
+WIDTH = 600;
+HEIGHT = 600;
+TITLE = 'Dodger';
+
+const TEXTCOLOR = [255, 255, 255];
+const FONT_SIZE = 48;
+const BACKGROUNDCOLOR = [0, 0, 0];
+const BADDIEMINSIZE = 10;
+const BADDIEMAXSIZE = 40;
+const BADDIEMINSPEED = 1;
+const BADDIEMAXSPEED = 8;
+const ADDNEWBADDIERATE = 6;
+const BADDIE_COLOR = [97, 255, 97];
+const PLAYERMOVERATE = 5;
+
+/*
+ * Return a random integer N such that min <= N < max.
+ */
+function getRandomInteger(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor((Math.random() * (max - min)) + min);
+}
+
+const State = Object.freeze({
+  START: 1,
+  PLAY: 2,
+  GAME_OVER: 3
+});
+
+var state, player, baddieImage, topScore, baddies, score, baddieAddCounter;
+
+function reset() {
+  state = State.START;
+
+  player = new Actor('player');
+  baddieImage = new Actor('baddie');
+
+  topScore = localStorage.getItem('topScore');
+  if (topScore == null) {
+    topScore = 0;
+  }
+
+  // set up the start of the game
+  baddies = [];
+  score = 0;
+  player.topleft = [WIDTH / 2, HEIGHT - 50];
+  baddieAddCounter = 0;
+}
+
+function draw() {
+  // Draw the game world on the window.
+  screen.fill(BACKGROUNDCOLOR);
+
+  if (state === State.START) {
+    // show the "Start" screen
+    screen.draw.text('Dodger', {
+      fontsize: FONT_SIZE,
+      color: TEXTCOLOR,
+      topleft: [Math.floor(WIDTH / 3), Math.floor(HEIGHT / 3)]
+    });
+    screen.draw.text('Press a key to start.', {
+      fontsize: FONT_SIZE,
+      color: TEXTCOLOR,
+      topleft: [Math.floor(WIDTH / 3) - 30, Math.floor(HEIGHT / 3) + 50]
+    });
+  }
+  else if (state === State.PLAY) {
+    // Draw the score and top score.
+    screen.draw.text('Score: ' + score, {
+      fontsize: FONT_SIZE,
+      color: TEXTCOLOR,
+      topleft: [10, 0]
+    });
+    screen.draw.text('Top Score: ' + topScore, {
+      fontsize: FONT_SIZE,
+      color: TEXTCOLOR,
+      topleft: [10, 40]
+    });
+
+    // Draw the player's rectangle
+    player.draw();
+
+    // Draw each baddie
+    for (let b of baddies) {
+      screen.draw.filled_rect(b, BADDIE_COLOR);
+      baddieImage.pos = b.center;
+      baddieImage.draw();
+    }
+  }
+  else if (state === State.GAME_OVER) {
+    // Stop the game and show the "Game Over" screen.
+    screen.draw.text('GAME OVER', {
+      fontsize: FONT_SIZE,
+      color: TEXTCOLOR,
+      topleft: [Math.floor(WIDTH / 3), Math.floor(HEIGHT / 3)]
+    });
+    screen.draw.text('Press a key to play again.', {
+      fontsize: FONT_SIZE,
+      color: TEXTCOLOR,
+      topleft: [Math.floor(WIDTH / 3) - 80, Math.floor(HEIGHT / 3) + 50]
+    });
+  }
+}
+
+function update() {
+  if (state !== State.PLAY) {
+    return;
+  }
+
+  score += 1; // increase score
+
+  let reverseCheat = keyboard[keys.Z],
+      slowCheat = keyboard[keys.X];
+
+  // Add new baddies at the top of the screen, if needed.
+  if ((!reverseCheat) && (!slowCheat)) {
+    baddieAddCounter += 1;
+  }
+  else {
+    // Reset the score when the player is using cheats
+    score = 0;
+  }
+  if (baddieAddCounter === ADDNEWBADDIERATE) {
+    baddieAddCounter = 0;
+    let baddieSize = getRandomInteger(BADDIEMINSIZE, BADDIEMAXSIZE + 1),
+        newBaddie = new Rect(getRandomInteger(0, WIDTH - baddieSize + 1), 0 - baddieSize, baddieSize, baddieSize);
+    newBaddie.speed = getRandomInteger(BADDIEMINSPEED, BADDIEMAXSPEED + 1);
+    baddies.push(newBaddie);
+  }
+
+  // Move the player around.
+  if ((keyboard[keys.LEFT] || keyboard[keys.A]) && (player.left > 0)) {
+    player.left -= PLAYERMOVERATE;
+  }
+  if ((keyboard[keys.RIGHT] || keyboard[keys.D]) && (player.right < WIDTH)) {
+    player.right += PLAYERMOVERATE;
+  }
+  if ((keyboard[keys.UP] || keyboard[keys.W]) && (player.top > 0)) {
+    player.top -= PLAYERMOVERATE;
+  }
+  if ((keyboard[keys.DOWN] || keyboard[keys.S]) && (player.bottom < HEIGHT)) {
+    player.top += PLAYERMOVERATE;
+  }
+
+  // Move the baddies down.
+  for (let b of baddies) {
+    if ((!reverseCheat) && (!slowCheat)) {
+      b.move_ip(0, b.speed);
+    }
+    else if (reverseCheat) {
+      b.move_ip(0, -5);
+    }
+    else if (slowCheat) {
+      b.move_ip(0, 1);
+    }
+  }
+
+  // Delete baddies that have fallen past the bottom.
+  baddies = baddies.filter(b => b.top <= HEIGHT);
+
+  // Check if any of the baddies have hit the player.
+  for (let b of baddies) {
+    if (player.colliderect(b)) {
+      state = State.GAME_OVER;
+      if (score > topScore) {
+        topScore = score; // set new top score
+        localStorage.setItem('topScore', topScore);
+      }
+      sounds.gameover.play();
+      return;
+    }
+  }
+}
+
+function on_key_down(key, mod, unicode) {
+  if (state !== State.PLAY) {
+    state = State.PLAY;
+    // set up the start of the game
+    baddies = [];
+    score = 0;
+    player.topleft = [WIDTH / 2, HEIGHT - 50];
+    baddieAddCounter = 0;
+  }
+}
+
+window.addEventListener('load', (event) => {
+  images.LOAD('#imageLoader img');
+  sounds.LOAD('#soundLoader audio');
+  reset();
+  screen.set_mode('#screen', '#reset', '#pause');
+});
+</script>
+</body>
+
+</html>
