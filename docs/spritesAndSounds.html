@@ -201,11 +201,11 @@ function getRandomInteger(min, max) {
 }
 
 // set up the block data structure
-var foodCounter, playerImage, player, foods, musicPlaying;
+var foodCounter, player, foods, musicPlaying;
 
 function reset() {
   foodCounter = 0;
-  playerImage = new Actor('player');
+  let playerImage = new Actor('player');
   playerImage.topleft = [300, 100];
   player = new Rect(playerImage);
   foods = [];
@@ -223,9 +223,7 @@ function draw() {
   screen.fill('black');
 
   // draw the block onto the surface
-  screen.draw.rect(player, 'white');
-  playerImage.pos = player.center;
-  playerImage.draw();
+  screen.blit('player', player);
 
   // draw the food
   for (let f of foods) {
