@@ -259,15 +259,14 @@ WIDTH = 600;
 HEIGHT = 600;
 TITLE = 'Dodger';
 
-const TEXTCOLOR = [255, 255, 255];
 const FONT_SIZE = 48;
+const TEXTCOLOR = [255, 255, 255];
 const BACKGROUNDCOLOR = [0, 0, 0];
 const BADDIEMINSIZE = 10;
 const BADDIEMAXSIZE = 40;
 const BADDIEMINSPEED = 1;
 const BADDIEMAXSPEED = 8;
 const ADDNEWBADDIERATE = 6;
-const BADDIE_COLOR = [97, 255, 97];
 const PLAYERMOVERATE = 5;
 
 /*
@@ -285,13 +284,12 @@ const State = Object.freeze({
   GAME_OVER: 3
 });
 
-var state, player, baddieImage, topScore, baddies, score, baddieAddCounter;
+var state, player, topScore, baddies, score, baddieAddCounter;
 
 function reset() {
   state = State.START;
 
   player = new Actor('player');
-  baddieImage = new Actor('baddie');
 
   topScore = localStorage.getItem('topScore');
   if (topScore == null) {
@@ -340,9 +338,7 @@ function draw() {
 
     // Draw each baddie
     for (let b of baddies) {
-      screen.draw.filled_rect(b, BADDIE_COLOR);
-      baddieImage.pos = b.center;
-      baddieImage.draw();
+      screen.blit('baddie', b);
     }
   }
   else if (state === State.GAME_OVER) {
@@ -414,7 +410,7 @@ function update() {
   }
 
   // Delete baddies that have fallen past the bottom.
-  baddies = baddies.filter(b => b.top <= HEIGHT);
+  baddies = baddies.filter(b => (b.top <= HEIGHT));
 
   // Check if any of the baddies have hit the player.
   for (let b of baddies) {
