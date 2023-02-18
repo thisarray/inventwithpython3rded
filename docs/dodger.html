@@ -295,6 +295,9 @@ function reset() {
   if (topScore == null) {
     topScore = 0;
   }
+  else {
+    topScore = parseInt(topScore, 10);
+  }
 
   // set up the start of the game
   baddies = [];
